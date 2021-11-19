@@ -1,4 +1,5 @@
 alias SecretFriend.Core.SFList
+alias SecretFriend.Worker.SFWorker
 
 sflist =
     SFList.new()
