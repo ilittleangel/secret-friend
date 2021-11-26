@@ -2,57 +2,48 @@ defmodule SecretFriend.Worker.SFWorker do
     alias SecretFriend.Core.SFList
 
     def start() do
-        spawn(SecretFriend.Worker.SFWorker, :loop, [SFList.new(), nil])
+        spawn(__MODULE__, :loop, [{SFList.new(), nil}])
     end
 
-    def loop(sflist, selection) do
+    def loop({_sflist, _selection} = state) do
         receive do
-            {:add_friend, :tadeo} ->
-                loop(sflist, selection)
-                # no queremos añadir a Tadea a la lista de amigos
-
-            {:add_friend, friend} ->
-                sflist = SFList.add_friend(sflist, friend)
-                loop(sflist, nil)
-                # nil porque cuando añades a la lista quieres una nueva selection
+            {:cast, msg} -> 
+                {:noreplay, new_state} = handle_cast(msg, state)
+                loop(new_state)
             
-            {:create_selection, from} ->
-                case selection do
-                    nil ->
-                        new_selection = SFList.create_selection(sflist)
-                        send(from, {:reply_create_selection, new_selection})
-                        loop(sflist, new_selection)
-
-                    existin_selection -> 
-                        send(from, {:reply_create_selection, existin_selection})
-                        loop(sflist, existin_selection)
-                end
-
-            {:show, from} ->
-                send(from, {:reply_show, sflist})
-                loop(sflist, selection)
+            {:call, from, msg} ->
+                {:replay, response, new_state} = handle_call(msg, from, state)
+                send(from, {:response, response})
+                loop(new_state)
         end
-        
     end
 
-    def add_friend(pid, friend) do
-        send(pid, {:add_friend, friend})
+    
+    # handle_cast(msg, state) -> {:noreplay, new_state}
+    def handle_cast({:add_friend, friend}, {sflist, _selection} = _state) do
+        new_sflist = SFList.add_friend(sflist, friend)
+        {:noreplay, {new_sflist, nil}}
+        # Recibe un state, lo modifica y lo devuelve. En este caso el state es la lista.
+        # nil porque cuando añades a la lista quieres una nueva selection
+    end
+
+
+    # handle_call(msg, from, state) -> {:replay, response, new_state}
+    def handle_call(:create_selection, _from, {sflist, nil} = _state) do
+        new_selection = SFList.create_selection(sflist)
+        {:replay, new_selection, {sflist, new_selection}}
+        # este caso si modifica el estado
+    end
+
+    # handle_call(msg, from, state) -> {:replay, response, new_state}
+    def handle_call(:create_selection, _from, {_sflist, selection} = state) do
+        {:replay, selection, state}
+        # este caso no modifica el estado y lo envia tal cual
     end
     
-    def create_selection(pid) do
-        send(pid, {:create_selection, self()})
-        receive do
-            {:reply_create_selection, selection} -> selection
-            _other -> nil
-        end
-    end
-
-    def show(pid) do
-        send(pid, {:show, self()})
-        receive do
-            {:reply_show, sflist} -> sflist
-            _other -> nil
-        end
+    # handle_call(msg, from, state)
+    def handle_call(:show, _from, {sflist, _selection} = state) do
+        {:replay, sflist, state}
     end
 
 end

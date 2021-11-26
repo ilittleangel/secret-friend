@@ -1,11 +1,9 @@
-alias SecretFriend.Core.SFList
-alias SecretFriend.Worker.SFWorker
+alias SecretFriend.API.SFList
 
-sflist =
-    SFList.new()
-    |> SFList.add_friend("Angel")
-    |> SFList.add_friend("Ramon")
-    |> SFList.add_friend("Rita")
+sflist = SFList.new()
+SFList.add_friend(sflist, "Angel")
+SFList.add_friend(sflist, "Ramon")
+SFList.add_friend(sflist, "Rita")
 
-IO.puts("Loaded sflist inspect ... #{inspect(sflist)}")
-IO.puts("Loaded sflist join ... #{Enum.join(sflist, ",")}")
+IO.inspect(SFList.show(sflist))
+IO.puts("Loaded...")
