@@ -7,8 +7,10 @@ defmodule SecretFriend.API.SFList do
     end
 
     def add_friend(name, friend) do
-        GenServer.cast(name, {:add_friend, friend})
-        name
+        case GenServer.call(name, {:add_friend, friend}) do
+            :ok -> name
+            :locked -> :locked
+        end
     end
     
     def create_selection(name) do
@@ -17,6 +19,16 @@ defmodule SecretFriend.API.SFList do
 
     def show(name) do
         GenServer.call(name, :show)
+    end
+
+    # name es el nombre del proceso que contiene un state
+    def lock?(name) do
+        GenServer.call(name, :lock?)
+    end
+
+    # cuando recibimos este mensaje ya no podemos añadir mas amigos
+    def lock(name) do
+        GenServer.cast(name, :lock)
     end
 
 end
