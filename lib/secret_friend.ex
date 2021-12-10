@@ -4,7 +4,7 @@ defmodule SecretFriend do
   @impl Application
   def start(_type, _args) do
     children = [
-      {SecretFriend.Worker.SFWorker, :supervised}
+      {SecretFriend.Boundary.SFListsSupervisor, :noargs}
     ]
     # Esto arranca el start_link del modulo SFWorker
 
