@@ -14,7 +14,7 @@ defmodule SecretFriend.API.SFList do
             :locked -> :locked
         end
     end
-    
+
     def create_selection(name) do
         GenServer.call(name, :create_selection)
     end
